@@ -130,7 +130,7 @@ output <- lbfgs(objective, gradient, c(-1.2,1))
 # 531-537. A workspace with the dataset ("Leukemia.RData") is included 
 # in the package distribution.
 
-load("Leukemia.RData")
+data(Leukemia)
 
 X <- Leukemia$x
 y <- Leukemia$y
