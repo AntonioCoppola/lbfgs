@@ -1,11 +1,11 @@
 Package: lbfgs
 Type: Package
 Title: L-BFGS and OWL-QN Optimization
-Version: 1.1
+Version: 1.0
 Date: 2014-07-08
 Author: Antonio Coppola and Brandon Stewart, Harvard University
 Maintainer: Antonio Coppola <acoppola@college.harvard.edu>
-Description: A wrapper for the libLBFGS optimization library written by Naoaki Okazaki. The L-BFGS method solves the unconstrainted minimization problem, minimize the function F(x), where x = (x1, x2, ..., xN), if the objective function F(x) and its gradient G(x) are both computable. The L-BFGS method finds a minimizer iteratively, by approximating the inverse hessian matrix by information from last m iterations. This saves the memory storage and computational time drastically for large-scaled problems. This library also implements the OWL-QN (Orthant-Wise Quasi-Newton Limited-Memory) optimization algorithm, which serves to minimize T(x) = F(x) + P(x), where P(x) is the L1-norm of the parameter vector.
+Description: A wrapper built around the libLBFGS optimization library written by Naoaki Okazaki. The lbfgs package implements both the Limited-memory Broyden-Fletcher-Goldfarb-Shanno (L-BFGS) and the Orthant-Wise Quasi-Newton Limited-Memory (OWL-QN) optimization algorithms. The L-BFGS algorithm solves the problem of minimizing an objective, given its gradient, by iteratively computing approximations of the inverse Hessian matrix. The OWL-QN algorithm finds the optimum of an objective plus the L1-norm of the problem's parameters, and can be used to train log-linear models with L1-regularization. The package offers a fast and memory-efficient implementation of these optimization routines, which is particularly suited for high-dimensional problems.
 License: MIT + file LICENSE
 Imports: Rcpp (>= 0.11.2)
 LinkingTo: Rcpp

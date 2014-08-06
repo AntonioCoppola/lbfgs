@@ -1,6 +1,7 @@
-# Leukemia Data
-# Golub et al 1999
-# Binary response
+# An example using L-BFGS to perform a Poisson regression using data from Golub, 
+# Todd R., et al. "Molecular classification of cancer: class discovery and class 
+# prediction by gene expression monitoring." Science 286.5439 (1999): 531-537.
+# This time, the objective function and the gradient are implemented in C++.
 
 library(lbfgs)
 library(microbenchmark)

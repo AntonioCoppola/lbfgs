@@ -8,31 +8,31 @@ Optimize function using libLBFGS library
 Performs function optimization using Limited-memory Broyden-Fletcher-Goldfarb-Shanno (L-BFGS) and Orthant-Wise Quasi-Newton Limited-Memory optimization (OWL-QN). A wrapper to the libLBFGS library by Naoaki Okazaki, based on an implementation of the L-BFGS method written by Jorge Nocedal. Please note that significant portions of this help file are taken from Okazaki's original documentation. For further information, please refer to the \href{http://www.chokkan.org/software/liblbfgs/index.html}{libLBFGS page}. 
 }
 \usage{
-lbfgs(call_eval, call_grad, vars, ...,
-		    invisible = 0, m = 6, 
-        epsilon = 1e-5, past = 0, 
-        delta = 0, max_iterations = 0, 
-        linesearch_algorithm = "LBFGS_LINESEARCH_DEFAULT", 
-        max_linesearch = 20, 
-        min_step = 1e-20, 
-        max_step = 1e+20, 
-        ftol = 1e-4, wolfe = 0.9, 
-        gtol = 0.9, orthantwise_c = 0, 
-        orthantwise_start = 0,
-        orthantwise_end = length(vars))
+lbfgs(call_eval, call_grad, vars, environment=NULL,
+      ..., invisible = 0, m = 6, epsilon = 1e-5, past = 0, 
+      delta = 0, max_iterations = 0, 
+      linesearch_algorithm = "LBFGS_LINESEARCH_DEFAULT", 
+      max_linesearch = 20, min_step = 1e-20, 
+      max_step = 1e+20, ftol = 1e-4, wolfe = 0.9, 
+      gtol = 0.9, orthantwise_c = 0, 
+      orthantwise_start = 0,
+      orthantwise_end = length(vars))
 }
 %- maybe also 'usage' for other objects documented here.
 \arguments{
 \item{call_eval}{
-The function to be optimized. This should be an R object taking in a numeric vector as its first parameter, and return a scalar output.
+The function to be optimized. This should be either an R object taking in a numeric vector as its first parameter, and returning a scalar output, or an external pointer to a C++ function compiled using the \code{inline} interface. C++ implementations should yielf considerable speed improvements. For more info about implementing the objective function and the gradient as compiled C++ functions, see the vignette.
 }
 \item{call_grad}{
-A function returning the gradient vector of the objective. This should be an R object taking in a numeric vector as its first parameter, and returning a vector output.
+A function returning the gradient vector of the objective. This should be either an R object taking in a numeric vector as its first parameter, and returning a scalar output, or an external pointer to a C++ function compiled using the \code{inline} interface. C++ implementations should yielf considerable speed improvements. For more info about implementing the objective function and the gradient as compiled C++ functions, see the vignette.
 }
 \item{vars}{
-A vector containing the initial values for all variables.}
+A numeric vector containing the initial values for all variables.}
+\item{environment}{
+An R environment containing all extra arguments to be passed to the objective function and to the gradient, which must be matched exactly. If the objective function and the gradient are implemented in C++, extra arguments must be passed using this option, rather than the \code{...} construct. If the functions are implemented in R, extra arguments should be passed to them using the \code{...} construct instead.
+}
 \item{...}{
-Other arguments to be passed to \code{call_eval} and \code{call_grad}. Note that these must be matched exactly.
+Other arguments to be passed to \code{call_eval} and \code{call_grad}. Note that these must be matched exactly. Use this construct for extra arguments if \code{call_eval} and \code{call_grad} are implemented as R functions. If\code{call_eval} and \code{call_grad} are C++ functions, use the \code{environment} construct instead.
 }
 \item{invisible}{
 Defaults to \code{0}. Set to \code{1} to suppress console output.}
@@ -122,11 +122,7 @@ gradient <- function(x) { ## Gradient of 'fr'
        200 *      (x2 - x1 * x1))
 }
 
-<<<<<<< HEAD
-output <- lbfgsOptimize(objective, gradient, c(-1.2,1))
-=======
-# output <- lbfgs(objective, gradient, c(-1.2,1))
->>>>>>> origin/cfunctions
+output <- lbfgs(objective, gradient, c(-1.2,1))
 
 # An example using OWL-QN to perform a Poisson regression using data from
 # Golub, Todd R., et al. "Molecular classification of cancer: class discovery 
@@ -134,11 +130,7 @@ output <- lbfgsOptimize(objective, gradient, c(-1.2,1))
 # 531-537. A workspace with the dataset ("Leukemia.RData") is included 
 # in the package distribution.
 
-<<<<<<< HEAD
 load("Leukemia.RData")
-=======
-# load("Leukemia.RData")  # Need to set your working directory first
->>>>>>> origin/cfunctions
 
 X <- Leukemia$x
 y <- Leukemia$y
@@ -150,19 +142,15 @@ pois.likelihood <- function(par, X, y, prec=0) {
 }
 
 pois.gradient <- function(par, X, y, prec=0) {
-  expXbeta <- exp(X%*%par)
+  Xbeta <- X%*%par
+  expXbeta <- exp(Xbeta)
   -(crossprod(X,(y-expXbeta)) -par*prec)
 }
 
-<<<<<<< HEAD
-output <- lbfgsOptimize(pois.likelihood,pois.grad, X=X1, y=y, prec=0,
-=======
 output <- lbfgs(pois.likelihood,pois.grad, X=X1, y=y, prec=0,
->>>>>>> origin/cfunctions
-          rep(0, ncol(X1)), invisible=1, orthantwise_c=1040.572, 
+          rep(0, ncol(X1)), invisible=1, orthantwise_c=10, 
           linesearch_algorithm="LBFGS_LINESEARCH_BACKTRACKING",
           orthantwise_start = 1, orthantwise_end = ncol(X1))
-
 
 # Trivial Example      
 
