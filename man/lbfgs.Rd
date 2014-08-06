@@ -147,7 +147,7 @@ pois.gradient <- function(par, X, y, prec=0) {
   -(crossprod(X,(y-expXbeta)) -par*prec)
 }
 
-output <- lbfgs(pois.likelihood,pois.grad, X=X1, y=y, prec=0,
+output <- lbfgs(pois.likelihood,pois.gradient, X=X1, y=y, prec=0,
           rep(0, ncol(X1)), invisible=1, orthantwise_c=10, 
           linesearch_algorithm="LBFGS_LINESEARCH_BACKTRACKING",
           orthantwise_start = 1, orthantwise_end = ncol(X1))
