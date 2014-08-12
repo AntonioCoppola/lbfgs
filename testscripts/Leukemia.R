@@ -7,7 +7,7 @@
 library(lbfgs)
 library(glmnet)
 library(microbenchmark)
-load("Leukemia.RData")
+data(Leukemia)
 
 ###########################
 # Logit Examples (L-BFGS) #
