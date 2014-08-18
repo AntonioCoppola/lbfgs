@@ -36,18 +36,21 @@ gradL2 <- function(par, X, y, prec) {
   -(crossprod(X,(y-p)) -par*prec)
 }
 
-init <- rep(0, ncol(X1))
 X <- Leukemia$x
 y <- Leukemia$y
 X1 <- cbind(1, X)   # Add an intercept
+init <- rep(0, ncol(X1))
 
 # Comparing the ridge version to optim
 optim.out <- optim(init, lhoodL2, gradL2, method = "L-BFGS-B", X=X1, y=y, prec=2)
 lbfgs.out <-lbfgs(lhoodL2, gradL2, init, invisible=1, X=X1, y=y, prec=2)
 all.equal(optim.out$value, lbfgs.out$value)
+
 microbenchmark(optim.out <- optim(init, lhoodL2, gradL2, method = "L-BFGS-B", X=X1, y=y, prec=2),
                lbfgs.out <- lbfgs(lhoodL2, gradL2, init, invisible=1, X=X1, y=y, prec=2))
 
+plot(optim.out$par, lbfgs.out$par, main="Lbfgs vs. Optim Parameters",
+     xlab="optim", ylab="lbfgs")
 
 #############################
 # Poisson Examples (OWL-QN) #
@@ -99,19 +102,21 @@ cbind(as.numeric(coef(glm.D93)),optim.out$par) # Minor differences due to conver
 
 
 # Poisson example from glmnet
-N <- 500; p <- 20
+N <- 500
+p <- 20
 nzc <- 5
 x <- matrix(rnorm(N*p),N,p)
 beta <- rnorm(nzc)
 f <- x[,seq(nzc)]%*%beta
 mu <- exp(f)
 y <- rpois(N,mu)
+
 fit <- glmnet(x,y,family="poisson", standardize=FALSE)
+
 C <- fit$lambda[25]*nrow(x)
 coef(fit)[,25]
 library(RlibLBFGS)
-X <- x
-X1 <- cbind(1,X)
+X1 <- cbind(1,x)
 
 
 owl <- lbfgs(pois.ll,pois.grad, rep(0, ncol(X1)), X=X1, y=y, prec=0, 
@@ -123,9 +128,9 @@ owl <- lbfgs(pois.ll,pois.grad, rep(0, ncol(X1)), X=X1, y=y, prec=0,
 cbind(owl$par,as.numeric(coef(fit)[,25]))
 
 # Timings
-microbenchmark(glmnet(x,y,family="poisson", standardize=FALSE),
-               owl <- lbfgs(pois.ll,pois.grad, rep(0, ncol(X1)), invisible=1, orthantwise_c=C, 
-                                    linesearch_algorithm="LBFGS_LINESEARCH_BACKTRACKING",
-                                    orthantwise_start = 1,
-                                    orthantwise_end = ncol(X1),
-                                    X=X1, y=y, prec=0))
+microbenchmark(out <- lbfgs(pois.ll,pois.grad, rep(0, ncol(X1)), invisible=1, orthantwise_c=C, 
+                            linesearch_algorithm="LBFGS_LINESEARCH_BACKTRACKING",
+                            orthantwise_start = 1,
+                            orthantwise_end = ncol(X1),
+                            X=X1, y=y, prec=0),
+                    fit <- glmnet(x,y,family="poisson", standardize=FALSE))
