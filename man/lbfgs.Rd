@@ -5,7 +5,7 @@
 Optimize function using libLBFGS library
 }
 \description{
-Performs function optimization using Limited-memory Broyden-Fletcher-Goldfarb-Shanno (L-BFGS) and Orthant-Wise Quasi-Newton Limited-Memory optimization (OWL-QN). A wrapper to the libLBFGS library by Naoaki Okazaki, based on an implementation of the L-BFGS method written by Jorge Nocedal. Please note that significant portions of this help file are taken from Okazaki's original documentation. For further information, please refer to the \href{http://www.chokkan.org/software/liblbfgs/index.html}{libLBFGS page}. 
+Performs function optimization using the Limited-memory Broyden-Fletcher-Goldfarb-Shanno (L-BFGS) and Orthant-Wise Limited-memory Quasi-Newton optimization (OWL-QN) algorithms. A wrapper to the libLBFGS library by Naoaki Okazaki, based on an implementation of the L-BFGS method written by Jorge Nocedal. Please note that significant portions of this help file are taken from Okazaki's original documentation. For further information, please refer to the \href{http://www.chokkan.org/software/liblbfgs/index.html}{libLBFGS page}. 
 }
 \usage{
 lbfgs(call_eval, call_grad, vars, environment=NULL,
@@ -21,10 +21,10 @@ lbfgs(call_eval, call_grad, vars, environment=NULL,
 %- maybe also 'usage' for other objects documented here.
 \arguments{
 \item{call_eval}{
-The function to be optimized. This should be either an R object taking in a numeric vector as its first parameter, and returning a scalar output, or an external pointer to a C++ function compiled using the \code{inline} interface. C++ implementations should yielf considerable speed improvements. For more info about implementing the objective function and the gradient as compiled C++ functions, see the vignette.
+The function to be optimized. This should be either an R object taking in a numeric vector as its first parameter, and returning a scalar output, or an external pointer to a C++ function compiled using the \code{inline} interface. C++ implementations should yield considerable speed improvements. For more info about implementing the objective function and the gradient as compiled C++ functions, see the accompanying vignette.
 }
 \item{call_grad}{
-A function returning the gradient vector of the objective. This should be either an R object taking in a numeric vector as its first parameter, and returning a scalar output, or an external pointer to a C++ function compiled using the \code{inline} interface. C++ implementations should yielf considerable speed improvements. For more info about implementing the objective function and the gradient as compiled C++ functions, see the vignette.
+A function returning the gradient vector of the objective. This should be either an R object taking in a numeric vector as its first parameter, and returning a scalar output, or an external pointer to a C++ function compiled using the \code{inline} interface. C++ implementations should yield considerable speed improvements. For more info about implementing the objective function and the gradient as compiled C++ functions, see the accompanying vignette.
 }
 \item{vars}{
 A numeric vector containing the initial values for all variables.}
@@ -37,18 +37,18 @@ Other arguments to be passed to \code{call_eval} and \code{call_grad}. Note that
 \item{invisible}{
 Defaults to \code{0}. Set to \code{1} to suppress console output.}
 \item{m}{
-The number of corrections to approximate the inverse hessian matrix. The L-BFGS routine stores the computation results of previous \code{m} iterations to approximate the inverse hessian matrix of the current iteration. This parameter controls the size of the limited memories (corrections). The default value is \code{6}. Values less than \code{3} are not recommended. Large values will result in excessive computing time.}
+The number of corrections to approximate the inverse Hessian matrix. The L-BFGS routine stores the computation results of previous \code{m} iterations to approximate the inverse hessian matrix of the current iteration. This parameter controls the size of the limited memories (corrections). The default value is \code{6}. Values less than \code{3} are not recommended. Large values will result in excessive computing time.}
 \item{epsilon}{
 Epsilon for convergence test. This parameter determines the accuracy with which the solution is to be found. A minimization terminates when \code{||g||} \code{<} \code{epsilon} \code{*} \code{max(1, ||x||)}, where \code{||.||} denotes the Euclidean \code{(L2)} norm. The default value is \code{1e-5}.
  }
 \item{past}{
 Distance for delta-based convergence test. This parameter determines the distance, in iterations, to compute the rate of decrease of the objective function. If the value of this parameter is zero, the library does not perform the delta-based convergence test. The default value is \code{0}.
- }
+}
 \item{delta}{
 Delta for convergence test. This parameter determines the minimum rate of decrease of the objective function. The library stops iterations when the following condition is met: \code{(f' - f)} \code{/ f < delta}, where \code{f'} is the objective value of past iterations ago, and \code{f} is the objective value of the current iteration. The default value is \code{0}.
 }
 \item{max_iterations}{
-The maximum number of iterations. The \code{lbfgsOptimize()} function terminates an optimization process with maximum iterations status code when the iteration count exceedes this parameter. Setting this parameter to zero continues an optimization process until a convergence or error. The default value is \code{0}.
+The maximum number of iterations. The \code{lbfgs()} function terminates an optimization process with maximum iterations status code when the iteration count exceedes this parameter. Setting this parameter to zero continues an optimization process until a convergence or error. The default value is \code{0}.
 }
 \item{linesearch_algorithm}{
 The line search algorithm. This parameter specifies a line search algorithm to be used by the L-BFGS routine. Valid arguments are the following: \cr
@@ -63,7 +63,7 @@ The line search algorithm. This parameter specifies a line search algorithm to b
 
   \code{LBFGS_LINESEARCH_BACKTRACKING_STRONG_WOLFE}: Backtracking method with strong Wolfe condition. The backtracking method finds the step length such that it satisfies both the Armijo condition and the following condition, \code{- |g(x +} \code{a * d)^T d|} \code{<=} \code{wolfe} \code{*} \code{|g(x)^T} \code{d|}. \cr
 
-If OWL-QN is invoked (\code{orthantwise_c != 0}), \code{BACKTRACKING} is used by default. Otherwise, the default option is \code{MORETHUENTE}. Note that the More-Thuente method cannot be used with OWL-QN, and the function will halt if sucha combination of parameters is specified.
+If OWL-QN is invoked (\code{orthantwise_c != 0}), \code{BACKTRACKING} is used by default. Otherwise, the default option is \code{MORETHUENTE}. Note that the More-Thuente method cannot be used with OWL-QN, and the function will halt if such a combination of parameters is specified.
   
 }
 \item{max_linesearch}{
@@ -85,7 +85,7 @@ A coefficient for the Wolfe condition. This parameter is valid only when the bac
 A parameter to control the accuracy of the line search routine. The default value is \code{0.9}. If the function and gradient evaluations are inexpensive with respect to the cost of the iteration (which is sometimes the case when solving very large problems) it may be advantageous to set this parameter to a small value. A typical small value is \code{0.1}. This parameter should be greater than the \code{ftol} parameter (default \code{1e-4}) and smaller than \code{1.0}.
 }
 \item{orthantwise_c}{
-Coefficient for the \code{L1} norm of variables. This parameter should be set to zero for standard minimization problems. Setting this parameter to a positive value activates Orthant-Wise Limited-memory Quasi-Newton (OWL-QN) method, which minimizes the objective function \code{F(x)} combined with the L1 norm \code{|x|} of the variables, \code{{F(x) + C |x|}}. This parameter is the coefficient for the \code{|x|}, i.e., \code{C}. As the L1 norm \code{|x|} is not differentiable at zero, the library modifies function and gradient evaluations from a client program suitably. The default value is zero. Note that the objective function minimized by alternative packages (e.g., \code{glmnet}) is of the form : \code{F(x)/N + C |x|}, where \code{N} is the number of observations. \code{RlibLBFGS} does not divide the likelihood function by \code{N}. To achieve equivalence with \code{glmnet} result, take this difference of implementation into account. 
+Coefficient for the \code{L1} norm of variables. This parameter should be set to zero for standard minimization problems. Setting this parameter to a positive value activates Orthant-Wise Limited-memory Quasi-Newton (OWL-QN) method, which minimizes the objective function \code{F(x)} combined with the L1 norm \code{|x|} of the variables, \code{{F(x) + C |x|}}. This parameter is the coefficient for the \code{|x|}, i.e., \code{C}. As the L1 norm \code{|x|} is not differentiable at zero, the library modifies function and gradient evaluations from a client program suitably. The default value is zero. Note that the objective function minimized by alternative packages (e.g., \code{glmnet}) is of the form : \code{F(x)/N + C |x|}, where \code{N} is the number of parameters. \code{lbfgs} does not divide the likelihood function by \code{N}. To achieve equivalence with \code{glmnet} result, take this difference of implementation into account. 
 }
 \item{orthantwise_start}{
 Start index for computing L1 norm of the variables. This parameter is valid only for OWL-QN method (i.e., \code{orthantwise_c != 0}). This parameter \code{b} (\code{0 <=} \code{b < N}) specifies the index number from which the library computes the L1 norm of the variables x, \code{|x| := |x_{b}| + |x_{b+1}| + ... + |x_{N}|}. In other words, variables \code{x_1, ..., x_{b-1}} are not used for computing the L1 norm. Setting \code{b (0 < b < N)}, one can protect variables, \code{x_1, ..., x_{b-1}} (e.g., a bias term of logistic regression) from being regularized. The default value is zero. Note that the parameters are indexed starting from zero, and not one.

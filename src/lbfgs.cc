@@ -1397,19 +1397,11 @@ static int progress(
     int ls
     )
 {
-    //int j = 0;
-    printf("Iteration %d:\n", k);
-    printf("fx = %f", fx);
-    //Uncomment this section for parameter reporting
-    //for (j = 0; j < n; j++){
-    //    printf(", x[%d] = %f", j, x[j]);
-    //     if(j % 5 == 0){
-    //        printf("\n");
-    //    }
-    //}
-    printf("\n");
-    printf("  xnorm = %f, gnorm = %f, step = %f\n", xnorm, gnorm, step);
-    printf("\n");
+    Rcout << "Iteration " << k << ": " << std::endl;
+    Rcout << "fx = " << fx << std::endl;
+    Rcout << std::endl;
+    Rcout << "  xnorm = " << xnorm << ", gnorm = " << gnorm << ", step = " << step << std::endl;
+    Rcout << std::endl;
     return 0;
 }
 
@@ -1434,13 +1426,6 @@ static lbfgsfloatval_t evaluate(
 
     lbfgsfloatval_t fx = (lbfgsfloatval_t) evalFunction->eval(Rcpp::wrap(vars))[0];
     Rcpp::NumericVector gradVector = (Rcpp::NumericVector) gradFunction->eval(Rcpp::wrap(vars));
-    
-    // Debugging Code (Uncomment for use)
-    // printf("The x1 is %f \n", vars[0]);
-    // printf("The x2 is %f \n", vars[1]);
-    // printf("The f(x) is %f \n", fx);
-    // printf("The grad[1] is %f \n", gradVector[0]);
-    // printf("The grad[2] is %f \n", gradVector[1]);
 
     for (i = 0; i < n; i++) {
         g[i] = (lbfgsfloatval_t) gradVector[i];
@@ -1482,7 +1467,7 @@ Rcpp::NumericVector lbfgsOptim(SEXP call_eval,
     lbfgs_parameter_t param;
 
     if (x == NULL) {
-        printf("ERROR: Failed to allocate a memory block for variables.\n");
+        Rcout << "ERROR: Failed to allocate a memory block for variables." << std::endl;
         return 1;
     }
 
@@ -1536,16 +1521,9 @@ Rcpp::NumericVector lbfgsOptim(SEXP call_eval,
 
     // Report the result
     if (invisible != 1){
-        printf("L-BFGS optimization terminated with status code = %d\n", ret);
-        printf("fx = %f", fx);
-        //Uncomment this section for parameter reporting
-        //for (k = 0; k < N; k++){
-        //    printf(", x[%d] = %f", k, x[k]);
-        //    if(k % 5 == 0){
-        //        printf("\n");
-        //    }
-        //}
-        printf("\n");
+        Rcout << "L-BFGS optimization terminated with status code = " << ret << std::endl;
+        Rcout << "fx = " << fx << std::endl;
+        Rcout << std::endl;
     }
 
 

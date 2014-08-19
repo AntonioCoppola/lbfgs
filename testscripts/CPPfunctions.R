@@ -116,7 +116,7 @@ gradient.R <- function(x) {
     200 * (x[2] - x[1]^2))
 }
 
-microbenchmark(out.CPP <- lbfgs(objective(), gradient(), c(-1.2,1), invisible=1),
+mb <- microbenchmark(out.CPP <- lbfgs(objective(), gradient(), c(-1.2,1), invisible=1),
                out.R <- lbfgs(objective.R, gradient.R, c(-1.2,1), invisible=1),
                out.optim <- optim(c(-1.2,1), objective.R, gradient.R, method="L-BFGS-B")) 
 
