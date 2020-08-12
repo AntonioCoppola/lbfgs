@@ -54,8 +54,7 @@ lbfgs <- function(call_eval, call_grad,  vars, environment = NULL, ...,
   }
   
   # Call main C++ routine
-  ret <- .Call('RlibLBFGS_lbfgs', 
-               PACKAGE = 'lbfgs', 
+  ret <- lbfgsOptim(
                call_eval, call_grad, vars, 
                environment, N, 
                invisible, m, epsilon,

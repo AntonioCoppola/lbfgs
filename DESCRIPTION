@@ -1,6 +1,6 @@
 Package: lbfgs
 Type: Package
-Title: Limited-memory BFGS Optimization
+Title: Limited-Memory BFGS Optimization
 Version: 1.2.2
 Authors@R: c(person("Antonio", "Coppola", role = c("aut", "cre", "cph"), email = "acoppola@college.harvard.edu"),
 	      person("Brandon", "Stewart", role = c("aut", "cph")),
