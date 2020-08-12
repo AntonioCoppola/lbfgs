@@ -14,3 +14,5 @@ Description: A wrapper built around the libLBFGS optimization library by Naoaki 
 License: GPL (>= 2)
 Imports: Rcpp (>= 0.11.2), methods
 LinkingTo: Rcpp
+VignetteBuilder: knitr
+Suggests: microbenchmark, inline, glmnet, knitr
