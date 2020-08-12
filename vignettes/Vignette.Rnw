@@ -55,8 +55,7 @@ Orthant-Wise Limited-memory Quasi-Newton (OWL-QN) optimization
 algorithms. The L-BFGS algorithm solves the problem of minimizing an
 objective, given its gradient, by iteratively computing approximations
 of the inverse Hessian matrix. The OWL-QN algorithm finds the optimum of
-an objective plus the $L_1$ norm of the problem's parameters, and can be
-used to train log-linear models with $L_1$ regularization. The package
+an objective plus the $L_1$ norm of the problem's parameters. The package
 offers a fast and memory-efficient implementation of these optimization
 routines, which is particularly suited for high-dimensional problems.
 The \pkg{lbfgs} package compares favorably with other optimization packages
@@ -68,10 +67,11 @@ for \proglang{R} in microbenchmark tests.
 
 \begin{document}
 \SweaveOpts{concordance=TRUE}
+% \VignetteIndexEntry{An R Package for Limited-memory BFGS Optimization}
 
 \section{Introduction}
 
-In this vignette we demonstrate how to use the \pkg{lbfgs} \proglang{R} package.\footnote{We are extremely thankful to Dustin Tingley for his advice and support.} While the  \code{optim} function in the \proglang{R} core package \pkg{stats} provides a variety of general purpose optimization algorithms for differentiable objectives, there is no comparable general optimization routine for objectives with a non-differentiable penalty.  Non-differentiable penalties such as the $L_1$ norm are attractive because they promote sparse solutions \citep{hastie2009elements}.  However it is this same lack of smoothness which makes the gradient-based methods in \code{optim} inapplicable.
+In this vignette we demonstrate how to use the \pkg{lbfgs} \proglang{R} package.\footnote{We are extremely thankful to Dustin Tingley for his advice and guidance. We also thank Jennifer Shephard and Harvard's Behavioral Laboratory in the Social Sciences for providing support for this project.} While the \code{optim} function in the \proglang{R} core package \pkg{stats} provides a variety of general purpose optimization algorithms for differentiable objectives, there is no comparable general optimization routine for objectives with a non-differentiable penalty.  Non-differentiable penalties such as the $L_1$ norm are attractive because they promote sparse solutions \citep{hastie2009elements}.  However it is this same lack of smoothness which makes the quasi-Newton methods in \code{optim} inapplicable.
 
 The \pkg{lbfgs} package addresses this issue by providing access to the Orthant-Wise Limited-memory Quasi-Newton (OWL-QN) optimization algorithm of \cite{Andrew_Gao_2007}, which allows for optimization of an objective with an $L_1$ penalty. The package uses the \href{http://www.chokkan.org/software/liblbfgs/}{libLBFGS} \proglang{C++} library by \cite{liblbfgs}, which itself is a port of the \proglang{Fortran} implementation by \cite{Nocedal_1980}. In addition to OWL-QN the package provides an implementation of L-BFGS which complements \code{optim}.  The linkage between \proglang{R} and \proglang{C++} is achieved using \pkg{Rcpp} \citeshort{Eddelbuettel_2013}. 
 
@@ -107,7 +107,7 @@ The \pkg{lbfgs} package provides a general-purpose library for numerical optimiz
 
 The following list provides brief comparisons between \pkg{lbfsg} and several other packages:
 \begin{itemize}
-\item \pkg{optim(x)}: The \pkg{lbfgs} package can be used as a drop-in replacement for the L-BFGS-B method of the \pkg{optim} \citeshort{R} and \pkg{optimx} \citeshort{optimx}, with performance improvements on particular classes of problems, especially if \pkg{lbfgs} is used in conjuction with \proglang{C++} implementations of the objective and gradient functions. In addition, the possibility of introducing $L_1$ penalization of the objective function allows for solution vectors with much higher sparsity, as most of the otherwise quasi-zero parameters are driven to zero.
+\item \pkg{optim}: The \pkg{lbfgs} package can be used as a drop-in replacement for the L-BFGS-B method of the \pkg{optim} \citeshort{R} and \pkg{optimx} \citeshort{optimx}, with performance improvements on particular classes of problems, especially if \pkg{lbfgs} is used in conjuction with \proglang{C++} implementations of the objective and gradient functions. In addition, the possibility of introducing $L_1$ penalization of the objective function allows for solution vectors with much higher sparsity, as most of the otherwise near-zero parameters are driven to zero.
 
 \item \pkg{penalized}: The \pkg{penalized} package \citeshort{penalized} fits generalized linear models with both $L_1$ (lasso and fused lasso) and $L_2$ (ridge) penalizations. However, \pkg{penalized} does not permit general optimization of $L_1$ regularized functions.
 
@@ -125,7 +125,7 @@ All optimization routines are handled by the \code{lbfgs()} function. The accomp
 \begin{itemize}
 \item \textbf{Basic Inputs:} The objective and gradient functions should be supplied as either R functions or external pointers to C++ functions compiled using the \pkg{inline} interface (see Section \ref{sec:cpp}). Extra parameters can be passed to the objective and gradient functions using either the \code{...} construct or by encapsulating them in an \proglang{R} environment, which is then passed to \code{lbfgs()}. If the functions are implemented in \proglang{R}, the \code{...} construct should be used. If the functions are otherwise implemented in \proglang{C++}, users should resort to the \code{environment} parameter.
 
-\item \textbf{Hessian Approximation:} As mentioned in Section \ref{sec:background}, the L-BFGS algorithm stores the results of its previous \code{m} iterations to approximate the inverse Hessian matrix for the current iteration. The parameter \code{m} specifies the number of previous computations to be stored. The default value is 6, and values less than 3 are not recommended \citep{liblbfgs}.
+\item \textbf{Hessian Approximation:} As mentioned in Section \ref{sec:background}, the L-BFGS algorithm stores the results of its previous \code{m} iterations to approximate the inverse Hessian matrix for the current iteration. The parameter \code{m} specifies the number of previous computations to be stored. The default value is 6, and values less than 3 are not recommended \citep{liblbfgs}. Note also that \pkg{optim}'s equivalent parameter, \code{lmm}, defaults to 5 instead.
 
 \item \textbf{Line Search Strategies:} The \pkg{libLBFGS} library implements a number of line search strategies for use with the L-BFGS and OWL-QN methods. The default strategy for the L-BFGS method is the one described by \cite{more1994line}. The More-Thuente strategy uses quadratic and cubic interpolations to find a step length that satisfies the Wolfe conditions \citep{wolfe1969convergence}.
 
@@ -352,7 +352,7 @@ For straightforward GLMs it would be difficult to find a solution faster than \p
 
 \subsection{The Basics}
 
-The package supports the implementation of the objective and gradient functions in \proglang{C++}, which may yield significant speed improvements over the respective \proglang{R} implementations. The optimization routine's API accepts both \proglang{R} function objects and external pointers to compiled \proglang{C++} functions. In order to be compatible with the \pkg{lbfgs} API, the \proglang{C++} functions \underline{must} return an object of type \code{Rcpp::NumericVector}, and take in either one or two objects of type \code{SEXP}. The first argument of type \code{SEXP} must be the pointer to an \proglang{R} numerical vector containing the values of the function's parameters. The second (optional) argument must be the pointer to an \proglang{R} environment holding all extra parameters to be fed into the objective and gradient functions. To perform optimization on the Rosenbrock function, we begin by defining the \proglang{C++} implementations of the objective and of the gradient as character strings, using the \pkg{Rcpp} library:
+The package supports the implementation of the objective and gradient functions in \proglang{C++}, which may yield significant speed improvements over the respective \proglang{R} implementations. The optimization routine's API accepts both \proglang{R} function objects and external pointers to compiled \proglang{C++} functions. The C++ evaluation routines use code from \cite{devol} and \cite{rcppde}. \footnote{The idea of supplying external pointers to the underlying \proglang{C++} library was introduced by Dirk Eddelbuettel. See for instance the \href{http://dirk.eddelbuettel.com/papers/rcpp_ku_nov2013-part2.pdf}{slides} from his presentation at the University of Kansas in November 2013.} In order to be compatible with the \pkg{lbfgs} API, the \proglang{C++} functions \underline{must} return an object of type \code{Rcpp::NumericVector}, and take in either one or two objects of type \code{SEXP}. The first argument of type \code{SEXP} must be the pointer to an \proglang{R} numerical vector containing the values of the function's parameters. The second (optional) argument must be the pointer to an \proglang{R} environment holding all extra parameters to be fed into the objective and gradient functions. To perform optimization on the Rosenbrock function, we begin by defining the \proglang{C++} implementations of the objective and of the gradient as character strings, using the \pkg{Rcpp} library:
 
 \begin{Schunk}
 \begin{Sinput}
@@ -556,12 +556,13 @@ lbfgs(likelihood.CPP(), ...)  121.2342 130.6826 135.0989 140.2065 322.2660
 \end{Sinput}
 \end{Schunk}
 
+While the speed of the optimization routines is satisfying with \proglang{R} implementations of the objective and gradient functions, the same interface can be used in tandem with \proglang{C++} when high performance is important.
+
 \section{Conclusion} \label{sec:conclusion}
 
-The \pkg{lbfgs} package provides a generic \proglang{R} interface for performing numerical optimization using the L-BFGS and OWL-QN algorithms. This vignette provides an overview of the package's features and usage. More detailed documentation regarding the package's functionality and API are available in the accompanying manual. We also encourage the interested reader to consult the relevant literature for greater detail regarding the L-BFGS and OWL-QN routines.
+The \pkg{lbfgs} package provides a generic \proglang{R} interface for performing numerical optimization using the L-BFGS and OWL-QN algorithms. This vignette provides an overview of the package's features and usage. More detailed documentation regarding the package's functionality and API are available in the accompanying manual.
 
 \clearpage
 \bibliography{biblio}
 
 \end{document}
-

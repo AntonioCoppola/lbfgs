@@ -29,9 +29,9 @@ namespace Rcpp {
 		    }
 		private:
 		    SEXP fcall, env;
-		    Rcpp::NumericVector defaultfun(SEXP par) { 			// essentialy same as the old evaluate
-				SEXP fn = ::Rf_lang3(fcall, par, R_DotsSymbol); // this could be done with Rcpp
-				SEXP sexp_fvec = ::Rf_eval(fn, env);			// but is still a lot slower right now
+		    Rcpp::NumericVector defaultfun(SEXP par) { 
+				SEXP fn = ::Rf_lang3(fcall, par, R_DotsSymbol);
+				SEXP sexp_fvec = ::Rf_eval(fn, env);
 				Rcpp::NumericVector f_result = (Rcpp::NumericVector) Rcpp::as<Rcpp::NumericVector>(sexp_fvec);
 				return(f_result); 
 		    }

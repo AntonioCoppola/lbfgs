@@ -1,5 +1,6 @@
 useDynLib(lbfgs)
 exportPattern("^[[:alpha:]]+")
 importFrom(Rcpp, evalCpp)
+importFrom("methods", "hasArg")
 
 export(lbfgs)

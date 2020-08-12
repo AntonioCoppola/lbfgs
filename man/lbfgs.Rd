@@ -130,27 +130,27 @@ output <- lbfgs(objective, gradient, c(-1.2,1))
 # 531-537. A workspace with the dataset ("Leukemia.RData") is included 
 # in the package distribution.
 
-data(Leukemia)
+# data(Leukemia)
 
-X <- Leukemia$x
-y <- Leukemia$y
-X1 <- cbind(1, X)
+# X <- Leukemia$x
+# y <- Leukemia$y
+# X1 <- cbind(1, X)
 
-pois.likelihood <- function(par, X, y, prec=0) {
-  Xbeta <- X%*%par
-  -(sum(y*Xbeta - exp(Xbeta)) -.5*sum(par^2*prec))
-}
+# pois.likelihood <- function(par, X, y, prec=0) {
+#   Xbeta <- X%*%par
+#   -(sum(y*Xbeta - exp(Xbeta)) -.5*sum(par^2*prec))
+# }
 
-pois.gradient <- function(par, X, y, prec=0) {
-  Xbeta <- X%*%par
-  expXbeta <- exp(Xbeta)
-  -(crossprod(X,(y-expXbeta)) -par*prec)
-}
+# pois.gradient <- function(par, X, y, prec=0) {
+#   Xbeta <- X%*%par
+#   expXbeta <- exp(Xbeta)
+#   -(crossprod(X,(y-expXbeta)) -par*prec)
+# }
 
-output <- lbfgs(pois.likelihood,pois.gradient, X=X1, y=y, prec=0,
-          rep(0, ncol(X1)), invisible=1, orthantwise_c=10, 
-          linesearch_algorithm="LBFGS_LINESEARCH_BACKTRACKING",
-          orthantwise_start = 1, orthantwise_end = ncol(X1))
+# output <- lbfgs(pois.likelihood,pois.gradient, X=X1, y=y, prec=0,
+#           rep(0, ncol(X1)), invisible=1, orthantwise_c=10, 
+#           linesearch_algorithm="LBFGS_LINESEARCH_BACKTRACKING",
+#           orthantwise_start = 1, orthantwise_end = ncol(X1))
 
 # Trivial Example      
 
