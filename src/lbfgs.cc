@@ -74,6 +74,7 @@ licence.
 #include "lbfgs.h"
 #include "evaluate.h"
 #include <Rcpp.h>
+#include <memory.h>
 
 #ifdef  _MSC_VER
 #define inline  __inline
@@ -1436,7 +1437,7 @@ static lbfgsfloatval_t evaluate(
 
 
 //[[Rcpp::export]]
-Rcpp::NumericVector lbfgsOptim(SEXP call_eval,
+Rcpp::List lbfgsOptim(SEXP call_eval,
     SEXP call_grad,
     Rcpp::NumericVector vars,
     SEXP env,
@@ -1460,8 +1461,7 @@ Rcpp::NumericVector lbfgsOptim(SEXP call_eval,
     int orthantwise_end
     )
 {
-    int i, ret = 0;
-    int k = 0;
+    int ret = 0;
     lbfgsfloatval_t fx;
     lbfgsfloatval_t *x = lbfgs_malloc(N);
     lbfgs_parameter_t param;
@@ -1472,24 +1472,25 @@ Rcpp::NumericVector lbfgsOptim(SEXP call_eval,
     }
 
     // Pointers to abstract base classes
-    Rcpp::EvalBase *ev = NULL;
-    Rcpp::EvalBase *grad = NULL;               
+    std::unique_ptr<Rcpp::EvalBase> ev;
+    std::unique_ptr<Rcpp::EvalBase> grad;               
 
     // Assign class based on object type
     if (TYPEOF(call_eval) == EXTPTRSXP) {                   // Non-standard mode: we are being passed an external pointer
-        ev = new Rcpp::EvalCompiled(call_eval, env);         // So assign pointers using external pointer in calls SEXP
-        grad = new Rcpp::EvalCompiled(call_grad, env);
+        ev  .reset(new Rcpp::EvalCompiled(call_eval, env));         // So assign pointers using external pointer in calls SEXP
+        grad.reset(new Rcpp::EvalCompiled(call_grad, env));
     } else {                                                // Standard mode: env_ is an env, functions are R objects 
-        ev = new Rcpp::EvalStandard(call_eval, env);    // So assign R functions and environment
-        grad = new Rcpp::EvalStandard(call_grad, env);
+        ev  .reset(new Rcpp::EvalStandard(call_eval, env));    // So assign R functions and environment
+        grad.reset(new Rcpp::EvalStandard(call_grad, env));
     }
 
     // Wrap up functions in struct
-    call_functions_wrapper routines = call_functions_wrapper(ev, grad);
+    call_functions_wrapper routines = 
+      call_functions_wrapper(ev.get(), grad.get());
     call_functions_wrapper* fPointer = &routines;
 
     // Initialize the variables. N must be length of vars array
-    for (i = 0; i < N; i++) {
+    for (int i = 0; i < N; i++) {
         x[i] = vars[i];
     }
 
@@ -1528,14 +1529,13 @@ Rcpp::NumericVector lbfgsOptim(SEXP call_eval,
 
 
     // Construct output
-    Rcpp::NumericVector return_array(N + 2);
-    return_array[0] = fx;
-    for (k = 0; k < N; k++){
-        return_array[k + 1] = x[k];
-    }
-    return_array[N + 1] = ret;
+    Rcpp::NumericVector par(x, x + N);
     
     // Clean up and return
     lbfgs_free(x);
-    return return_array;
+    
+    return Rcpp::List::create(
+      Rcpp::Named("value") = fx, 
+      Rcpp::Named("par") = par, 
+      Rcpp::Named("convergence") = ret);
 }

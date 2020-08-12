@@ -7,7 +7,7 @@
 using namespace Rcpp;
 
 // lbfgsOptim
-Rcpp::NumericVector lbfgsOptim(SEXP call_eval, SEXP call_grad, Rcpp::NumericVector vars, SEXP env, int N, int invisible, int m, lbfgsfloatval_t epsilon, int past, lbfgsfloatval_t delta, int max_iterations, int linesearch, int max_linesearch, lbfgsfloatval_t min_step, lbfgsfloatval_t max_step, lbfgsfloatval_t ftol, lbfgsfloatval_t wolfe, lbfgsfloatval_t gtol, lbfgsfloatval_t xtol, lbfgsfloatval_t orthantwise_c, int orthantwise_start, int orthantwise_end);
+Rcpp::List lbfgsOptim(SEXP call_eval, SEXP call_grad, Rcpp::NumericVector vars, SEXP env, int N, int invisible, int m, lbfgsfloatval_t epsilon, int past, lbfgsfloatval_t delta, int max_iterations, int linesearch, int max_linesearch, lbfgsfloatval_t min_step, lbfgsfloatval_t max_step, lbfgsfloatval_t ftol, lbfgsfloatval_t wolfe, lbfgsfloatval_t gtol, lbfgsfloatval_t xtol, lbfgsfloatval_t orthantwise_c, int orthantwise_start, int orthantwise_end);
 RcppExport SEXP _lbfgs_lbfgsOptim(SEXP call_evalSEXP, SEXP call_gradSEXP, SEXP varsSEXP, SEXP envSEXP, SEXP NSEXP, SEXP invisibleSEXP, SEXP mSEXP, SEXP epsilonSEXP, SEXP pastSEXP, SEXP deltaSEXP, SEXP max_iterationsSEXP, SEXP linesearchSEXP, SEXP max_linesearchSEXP, SEXP min_stepSEXP, SEXP max_stepSEXP, SEXP ftolSEXP, SEXP wolfeSEXP, SEXP gtolSEXP, SEXP xtolSEXP, SEXP orthantwise_cSEXP, SEXP orthantwise_startSEXP, SEXP orthantwise_endSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;

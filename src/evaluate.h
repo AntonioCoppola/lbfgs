@@ -16,11 +16,12 @@ namespace Rcpp {
 		    EvalBase() : neval(0) {};
 		    virtual Rcpp::NumericVector eval(SEXP par) = 0;
 		    unsigned long getNbEvals() { return neval; }
+		    virtual ~EvalBase() = default;
 	    protected:
 	        unsigned long int neval;
 	};
 
-	class EvalStandard : public EvalBase {
+	class EvalStandard final : public EvalBase {
 		public:
 		    EvalStandard(SEXP fcall_, SEXP env_) : fcall(fcall_), env(env_) {} 
 		    Rcpp::NumericVector eval(SEXP par) {
@@ -39,7 +40,7 @@ namespace Rcpp {
 
 	typedef Rcpp::NumericVector (*funcPtr)(SEXP, SEXP);
 
-	class EvalCompiled : public EvalBase {
+	class EvalCompiled final : public EvalBase {
 		public:
 		    EvalCompiled(Rcpp::XPtr<funcPtr> xptr, SEXP __env) {
 				funptr = *(xptr);
