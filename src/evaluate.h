@@ -16,11 +16,12 @@ namespace Rcpp {
 		    EvalBase() : neval(0) {};
 		    virtual Rcpp::NumericVector eval(SEXP par) = 0;
 		    unsigned long getNbEvals() { return neval; }
+		    virtual ~EvalBase() = default;
 	    protected:
 	        unsigned long int neval;
 	};
 
-	class EvalStandard : public EvalBase {
+	class EvalStandard final : public EvalBase {
 		public:
 		    EvalStandard(SEXP fcall_, SEXP env_) : fcall(fcall_), env(env_) {} 
 		    Rcpp::NumericVector eval(SEXP par) {
@@ -29,9 +30,9 @@ namespace Rcpp {
 		    }
 		private:
 		    SEXP fcall, env;
-		    Rcpp::NumericVector defaultfun(SEXP par) { 			// essentialy same as the old evaluate
-				SEXP fn = ::Rf_lang3(fcall, par, R_DotsSymbol); // this could be done with Rcpp
-				SEXP sexp_fvec = ::Rf_eval(fn, env);			// but is still a lot slower right now
+		    Rcpp::NumericVector defaultfun(SEXP par) { 
+				SEXP fn = ::Rf_lang3(fcall, par, R_DotsSymbol);
+				SEXP sexp_fvec = ::Rf_eval(fn, env);
 				Rcpp::NumericVector f_result = (Rcpp::NumericVector) Rcpp::as<Rcpp::NumericVector>(sexp_fvec);
 				return(f_result); 
 		    }
@@ -39,7 +40,7 @@ namespace Rcpp {
 
 	typedef Rcpp::NumericVector (*funcPtr)(SEXP, SEXP);
 
-	class EvalCompiled : public EvalBase {
+	class EvalCompiled final : public EvalBase {
 		public:
 		    EvalCompiled(Rcpp::XPtr<funcPtr> xptr, SEXP __env) {
 				funptr = *(xptr);

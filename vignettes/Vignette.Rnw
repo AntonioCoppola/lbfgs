@@ -16,7 +16,6 @@
 %\usepackage{ulem}
 
 \usepackage{comment}
-\usepackage{Sweave}
 
 % = For bibtex
 \def\citepos#1{\citeauthor{#1}'s (\citeyear{#1})}
@@ -55,8 +54,7 @@ Orthant-Wise Limited-memory Quasi-Newton (OWL-QN) optimization
 algorithms. The L-BFGS algorithm solves the problem of minimizing an
 objective, given its gradient, by iteratively computing approximations
 of the inverse Hessian matrix. The OWL-QN algorithm finds the optimum of
-an objective plus the $L_1$ norm of the problem's parameters, and can be
-used to train log-linear models with $L_1$ regularization. The package
+an objective plus the $L_1$ norm of the problem's parameters. The package
 offers a fast and memory-efficient implementation of these optimization
 routines, which is particularly suited for high-dimensional problems.
 The \pkg{lbfgs} package compares favorably with other optimization packages
@@ -66,12 +64,29 @@ for \proglang{R} in microbenchmark tests.
 \Keywords{optimization, \pkg{optim}, L-BFGS, OWL-QN, \proglang{R}}
 \Plainkeywords{optimization, optim, L-BFGS, OWL-QN, R} %% without formatting
 
+%\VignetteEngine{knitr::knitr}
+% \VignetteIndexEntry{An R Package for Limited-memory BFGS Optimization}
+
 \begin{document}
-\SweaveOpts{concordance=TRUE}
+
+
+<<setup, echo = FALSE>>=
+options(width = 80, digits = 4)
+knitr::opts_chunk$set(
+  echo = TRUE, message = FALSE, error = FALSE, size = "small")
+
+.def.chunk.hook  <- knitr::knit_hooks$get("chunk")
+knitr::knit_hooks$set(chunk = function(x, options) {
+  x <- .def.chunk.hook(x, options)
+  ifelse(options$size != "normalsize",
+         paste0("\\", options$size,"\n\n", x, "\n\n \\normalsize"),
+         x)
+})
+@
 
 \section{Introduction}
 
-In this vignette we demonstrate how to use the \pkg{lbfgs} \proglang{R} package.\footnote{We are extremely thankful to Dustin Tingley for his advice and support.} While the  \code{optim} function in the \proglang{R} core package \pkg{stats} provides a variety of general purpose optimization algorithms for differentiable objectives, there is no comparable general optimization routine for objectives with a non-differentiable penalty.  Non-differentiable penalties such as the $L_1$ norm are attractive because they promote sparse solutions \citep{hastie2009elements}.  However it is this same lack of smoothness which makes the gradient-based methods in \code{optim} inapplicable.
+In this vignette we demonstrate how to use the \pkg{lbfgs} \proglang{R} package.\footnote{We are extremely thankful to Dustin Tingley for his advice and guidance. We also thank Jennifer Shephard and Harvard's Behavioral Laboratory in the Social Sciences for providing support for this project.} While the \code{optim} function in the \proglang{R} core package \pkg{stats} provides a variety of general purpose optimization algorithms for differentiable objectives, there is no comparable general optimization routine for objectives with a non-differentiable penalty.  Non-differentiable penalties such as the $L_1$ norm are attractive because they promote sparse solutions \citep{hastie2009elements}.  However it is this same lack of smoothness which makes the quasi-Newton methods in \code{optim} inapplicable.
 
 The \pkg{lbfgs} package addresses this issue by providing access to the Orthant-Wise Limited-memory Quasi-Newton (OWL-QN) optimization algorithm of \cite{Andrew_Gao_2007}, which allows for optimization of an objective with an $L_1$ penalty. The package uses the \href{http://www.chokkan.org/software/liblbfgs/}{libLBFGS} \proglang{C++} library by \cite{liblbfgs}, which itself is a port of the \proglang{Fortran} implementation by \cite{Nocedal_1980}. In addition to OWL-QN the package provides an implementation of L-BFGS which complements \code{optim}.  The linkage between \proglang{R} and \proglang{C++} is achieved using \pkg{Rcpp} \citeshort{Eddelbuettel_2013}. 
 
@@ -107,7 +122,7 @@ The \pkg{lbfgs} package provides a general-purpose library for numerical optimiz
 
 The following list provides brief comparisons between \pkg{lbfsg} and several other packages:
 \begin{itemize}
-\item \pkg{optim(x)}: The \pkg{lbfgs} package can be used as a drop-in replacement for the L-BFGS-B method of the \pkg{optim} \citeshort{R} and \pkg{optimx} \citeshort{optimx}, with performance improvements on particular classes of problems, especially if \pkg{lbfgs} is used in conjuction with \proglang{C++} implementations of the objective and gradient functions. In addition, the possibility of introducing $L_1$ penalization of the objective function allows for solution vectors with much higher sparsity, as most of the otherwise quasi-zero parameters are driven to zero.
+\item \pkg{optim}: The \pkg{lbfgs} package can be used as a drop-in replacement for the L-BFGS-B method of the \pkg{optim} \citeshort{R} and \pkg{optimx} \citeshort{optimx}, with performance improvements on particular classes of problems, especially if \pkg{lbfgs} is used in conjuction with \proglang{C++} implementations of the objective and gradient functions. In addition, the possibility of introducing $L_1$ penalization of the objective function allows for solution vectors with much higher sparsity, as most of the otherwise near-zero parameters are driven to zero.
 
 \item \pkg{penalized}: The \pkg{penalized} package \citeshort{penalized} fits generalized linear models with both $L_1$ (lasso and fused lasso) and $L_2$ (ridge) penalizations. However, \pkg{penalized} does not permit general optimization of $L_1$ regularized functions.
 
@@ -125,7 +140,7 @@ All optimization routines are handled by the \code{lbfgs()} function. The accomp
 \begin{itemize}
 \item \textbf{Basic Inputs:} The objective and gradient functions should be supplied as either R functions or external pointers to C++ functions compiled using the \pkg{inline} interface (see Section \ref{sec:cpp}). Extra parameters can be passed to the objective and gradient functions using either the \code{...} construct or by encapsulating them in an \proglang{R} environment, which is then passed to \code{lbfgs()}. If the functions are implemented in \proglang{R}, the \code{...} construct should be used. If the functions are otherwise implemented in \proglang{C++}, users should resort to the \code{environment} parameter.
 
-\item \textbf{Hessian Approximation:} As mentioned in Section \ref{sec:background}, the L-BFGS algorithm stores the results of its previous \code{m} iterations to approximate the inverse Hessian matrix for the current iteration. The parameter \code{m} specifies the number of previous computations to be stored. The default value is 6, and values less than 3 are not recommended \citep{liblbfgs}.
+\item \textbf{Hessian Approximation:} As mentioned in Section \ref{sec:background}, the L-BFGS algorithm stores the results of its previous \code{m} iterations to approximate the inverse Hessian matrix for the current iteration. The parameter \code{m} specifies the number of previous computations to be stored. The default value is 6, and values less than 3 are not recommended \citep{liblbfgs}. Note also that \pkg{optim}'s equivalent parameter, \code{lmm}, defaults to 5 instead.
 
 \item \textbf{Line Search Strategies:} The \pkg{libLBFGS} library implements a number of line search strategies for use with the L-BFGS and OWL-QN methods. The default strategy for the L-BFGS method is the one described by \cite{more1994line}. The More-Thuente strategy uses quadratic and cubic interpolations to find a step length that satisfies the Wolfe conditions \citep{wolfe1969convergence}.
 
@@ -140,77 +155,65 @@ The OWL-QN method does not support the More-Thuente strategy, and instead employ
 We begin by using \pkg{lbfgs} to minimize a suite of simple test functions, and benchmarking the package against the L-BFGS-B \pkg{optim} method.
 
 \begin{itemize}
-\item \textbf{The Rosenbrock function:} We define the Rosenbrock function \citeshort{rosenbrock1960automatic} mapping $\mathbf{R}^2$ to $\mathbf{R}$ as $f(x,y) = 100 \cdot (y - x^2)^2 + (1 - x)^2$. The function has a global minimum at $(0,0)$ that lies within a long, flat valley. We define the function and its gradient as \proglang{R} objects, and then run the optimization routine using both \pkg{lbfgs} and \pkg{optim}. Note that the functions must accept all variables as a single numeric vector:
-\begin{Schunk}
-\begin{Sinput}
-> objective <- function(x) {   
+\item \textbf{The Rosenbrock function:} We define the Rosenbrock function \citeshort{rosenbrock1960automatic} mapping $\mathbf{R}^2$ to $\mathbf{R}$ as $f(x,y) = 100 \cdot (y - x^2)^2 + (1 - x)^2$. The function has a global minimum at $(0,0)$ that lies within a long, flat valley. We define the function and its gradient as \proglang{R} objects, and then run the optimization routine using both \pkg{lbfgs} and \pkg{optim}. Note that the functions must accept all variables as a single numeric vector:%
+%
+<<first_ex>>=
+objective <- function(x) {   
   100 * (x[2] - x[1]^2)^2 + (1 - x[1])^2
 }
 
-> gradient <- function(x) {
+gradient <- function(x) {
   c(-400 * x[1] * (x[2] - x[1]^2) - 2 * (1 - x[1]),
     200 * (x[2] - x[1]^2))
 }
 
-> out.lbfgs <- lbfgs(objective, gradient, c(-1.2, 1))
-> out.optim <- optim(c(-1.2, 1), objective, gradient, method="L-BFGS-B")
-\end{Sinput}
-\end{Schunk}
+library(lbfgs)
+out.lbfgs <- lbfgs(objective, gradient, c(-1.2, 1), invisible = 1)
+out.optim <- optim(c(-1.2, 1), objective, gradient, method="L-BFGS-B")
+@
 
 The results are the following:
 
-\begin{Schunk}
-\begin{Sinput}
-> out.lbfgs$value
-[1] 3.545445e-13
+<<first_output>>=
+out.lbfgs$value
+out.lbfgs$par
+out.optim$value
+out.optim$par
 
-> out.lbfgs$par
-[1] 1.000001 1.000001
+all.equal(out.lbfgs[c("value", "par")], out.optim[c("value", "par")], 
+          tolerance = 1e-5)
+@
 
-> out.optim$value
-[1] 2.267577e-13
+The results are essentially the same, but \pkg{lbfgs} achieves better running speeds in a microbenchmark\footnote{%
+All remarks about computation times are as of this writting. The results may differ with different compilers, hardware etc.} test done using the \pkg{microbenchmark} package \citeshort{microbenchmark}:
 
-> out.optim$par
-[1] 0.9999997 0.9999995
-
-\end{Sinput}
-\end{Schunk}
-
-The results are essentially the same, but \pkg{lbfgs} achieves better running speeds in a microbenchmark  \footnote{All microbenchmark test were performed on a machine running OS X, Version 10.9.3, with a 2.9 GHz Intel Core i7 processor, and 8 GB 1600 MHz DDR3 memory.} test done using the \pkg{microbenchmark} package \citeshort{microbenchmark}:
-
-\begin{Schunk}
-\begin{Sinput}
-> microbenchmark(out.lbfgs <- lbfgs(objective, gradient, c(-1.2, 1), 
-  invisible=1), out.optim <- optim(c(-1.2, 1), objective, 
-	gradient, method="L-BFGS-B"))
-	
-                   expr     min       lq     median      uq     max neval
-out.lbfgs <- lbfgs(...) 288.673 298.2110   303.8770 320.326 561.389   100
-out.optim <- optim(...) 389.958 402.1195   411.6735 432.590 691.975   100
-\end{Sinput}
-\end{Schunk}
+<<bench_first>>=
+library(microbenchmark)
+microbenchmark(
+  lbfgs = lbfgs(objective, gradient, c(-1.2, 1), invisible=1), 
+  optim = optim(c(-1.2, 1), objective, gradient, method="L-BFGS-B"))
+@
 
 \item \textbf{Booth's function}: Booth's function is $f(x,y) = (x + 2y -7)^2 + (2x + y -5)^2$. The function has a global minimum at $(1,3)$. The code and microbenchmark test are as follows:
 
-\begin{Schunk}
-\begin{Sinput}
-> objective <- function(x){
+<<booth_ex>>=
+objective <- function(x){
   (x[1] + 2*x[2] - 7)^2 + (2*x[1] + x[2] - 5)^2
 }
 
-> gradient <- function(x){
+gradient <- function(x){
   c(10*x[1] + 8*x[2] -34, 8*x[1] + 10*x[2] - 38)
 }
 
-> microbenchmark(out.lbfgs <- lbfgs(objective, gradient, c(-1.2, 1), 
-	invisible=1), out.optim <- optim(c(-1.2, 1), objective, 
-	gradient, method="L-BFGS-B"))
-               
-                   expr     min       lq     median       uq     max neval
-out.lbfgs <- lbfgs(...)  82.089  93.2145    95.3865 104.4565 242.969   100
-out.optim <- optim(...)  85.198  92.0895   100.8360 116.9355 320.429   100
-\end{Sinput}
-\end{Schunk}
+microbenchmark(
+  lbfgs = 
+    out.lbfgs <- lbfgs(objective, gradient, c(-1.2, 1), invisible=1), 
+  optim = 
+    out.optim <- optim(c(-1.2, 1), objective, gradient, method="L-BFGS-B"))
+
+all.equal(out.lbfgs[c("value", "par")], out.optim[c("value", "par")], 
+          tolerance = 1e-5)
+@
 
 \end{itemize}
 
@@ -218,131 +221,122 @@ out.optim <- optim(...)  85.198  92.0895   100.8360 116.9355 320.429   100
 
 In the following example we use \pkg{lbfgs} on the \code{Leukemia} example in \cite{glmnet}, with data originally due to \cite{Golub_1999}.  As in \cite{glmnet} we use logistic regression for the purposes of cancer classification based on gene expression monitoring in a microarray study. The dataset contains both a vector $\vec{y}$ of binary values specifying the cancer class for $72$ leukemia patients, and a $72 \times 3571$ matrix $\mathbf{X}$ specifying the levels of expressions of $3571$ genes for the 72 different patients. In the vector $\vec{y}$, $0$ corresponds to patients with acute lymphoblastic leukemia (ALL), and $1$ to patients with acute myeloid leukemia (AML). First, we load the data to the \proglang{R} workspace:
 
-\begin{Schunk}
-\begin{Sinput}
-> data(Leukemia)
-> X <- Leukemia$x
-> y <- Leukemia$y
-\end{Sinput}
-\end{Schunk}
+<<logistic_reg>>=
+data(Leukemia)
+X <- Leukemia$x
+y <- Leukemia$y
+@
 
 The likelihood function and its gradient for the standard logit setup with a ridge penalty are specified as follows:
 
-\begin{Schunk}
-\begin{Sinput}
-> likelihood <- function(par, X, y, prec) {
+<<logistic_asg_funcs>>=
+likelihood <- l_logistic <- function(par, X, y, prec) {
   Xbeta <- X %*% par
   -(sum(y * Xbeta - log(1 + exp(Xbeta))) - .5 * sum(par^2*prec))
 }
 
-> gradient <- function(par, X, y, prec) {
+gradient <- g_logistic <- function(par, X, y, prec) {
   p <-  1/(1 + exp(-X %*% par))
   -(crossprod(X,(y - p)) - par * prec)
 }
-\end{Sinput}
-\end{Schunk}
+@
 
 We bind a constant term to the $\mathbf{X}$ matrix,  and define a numerical vector with origin parameters for the algorithm initialization:
 
-\begin{Schunk}
-\begin{Sinput}
-> X1 <- cbind(1, X)
-> init <- rep(0, ncol(X1))
-\end{Sinput}
-\end{Schunk}
+<<logistic_start_vals>>=
+X1 <- cbind(1, X)
+init <- rep(0, ncol(X1))
+@
 
 Then we use both \pkg{lbfgs} and \pkg{optim} to run the regression with a penalty coefficient of $2$:
 
-\begin{Schunk}
-\begin{Sinput}
-> lbfgs.out <-lbfgs(likelihood, gradient, init, invisible=1,
-			     X=X1, y=y, prec=2)
-> optim.out <- optim(init, likelihood, gradient, method = "L-BFGS-B", 
-			     X=X1, y=y, prec=2)
+<<logistic_estimate>>=
+lbfgs.out <-lbfgs(likelihood, gradient, init, invisible=1, X=X1, y=y, 
+                  prec=2)
+optim.out <- optim(init, likelihood, gradient, method = "L-BFGS-B", 
+                   X=X1, y=y, prec=2)
 
-> all.equal(optim.out$value, lbfgs.out$value)
-[1] TRUE
-\end{Sinput}
-\end{Schunk}
+all.equal(optim.out$value, lbfgs.out$value)
+@
 
-In this particular case, \pkg{optim} outperforms \pkg{lbfgs}, but it is to be noted that this problem has a high number of parameters and a low number of observations:
-\begin{Schunk}
-\begin{Sinput}                  
-		   expr       min        lq   median       uq      max neval
-optim.out <- optim(...)  84.57455  99.03664 102.7622 119.6641 189.1403   100
-lbfgs.out <- lbfgs(...) 121.46801 138.16293 150.5174 192.3550 234.5430   100
-\end{Sinput}
-\end{Schunk}
+In this particular case, \code{optim} outperforms \pkg{lbfgs}, but it is to be noted that this problem has a high number of parameters and a low number of observations:
+
+<<logistic_bench>>=
+microbenchmark(
+  lbfgs = lbfgs(likelihood, gradient, init, invisible=1, X=X1, y=y, prec=2), 
+  optim = optim(init, likelihood, gradient, method = "L-BFGS-B", X=X1, y=y, 
+                prec=2), times = 10)
+@
+
 Although both \code{optim} and \pkg{lbfgs} are using the same algorithm here there are subtle differences in the implementation.  This underscores the importance of benchmarking performance for the individual application of interest.
 
 \subsection{A Poisson Regression with OWL-QN}
 Next, we use the OWL-QN method in \pkg{lbfgs} to perform a $L_1$ regularized Poisson regression comparing performance to \pkg{glmnet}.  We emphasize that this could not be done directly with \code{optim} due to the presence of the $L_1$ penalty.  We set up a simulated dataset the simple data generating process given in the manual of \pkg{glmnet} \citeshort{glmnet}. First, we define the variables of interest:
-\begin{Schunk}
-\begin{Sinput}
-> N <- 500
-> p <- 20
-> nzc <- 5
-> x <- matrix(rnorm(N * p), N, p)
-> beta <- rnorm(nzc)
-> f <- x[, seq(nzc)] %*% beta
-> mu <- exp(f)
-> y <- rpois(N, mu)
-> X1 <- cbind(1,x)
-> init <- rep(0, ncol(X1))
-\end{Sinput}
-\end{Schunk}
+
+<<poisson_setup>>=
+N <- 500
+p <- 20
+nzc <- 5
+x <- matrix(rnorm(N * p), N, p)
+beta <- rnorm(nzc)
+f <- x[, seq(nzc)] %*% beta
+mu <- exp(f)
+y <- rpois(N, mu)
+X1 <- cbind(1,x)
+init <- rep(0, ncol(X1))
+@
 
 We can perform a Poisson regression on this simulated data using \pkg{glmnet}:
-\begin{Schunk}
-\begin{Sinput}
-> fit <- glmnet(x, y, family="poisson", standardize=FALSE)
-\end{Sinput}
-\end{Schunk}
+
+<<poisson_glmnet>>=
+library(glmnet)
+fit <- glmnet(x, y, family="poisson", standardize=FALSE)
+@
 
 We choose a value of the regularization parameter from the model fitted with \pkg{glmnet} as the OWL-QN penalty coefficient to obtain analogous results using \pkg{lbfgs}:
-\begin{Schunk}
-\begin{Sinput}
-> C <- fit$lambda[25]*nrow(x)
-\end{Sinput}
-\end{Schunk}
+
+<<poisson_get_penal>>=
+lambda_use <- fit$lambda[25]
+C <- lambda_use*nrow(x)
+@
 
 To perform the same regression with \pkg{lbfgs}, we define the model's likelihood function and its gradient in \proglang{R}:
 
-\begin{Schunk}
-\begin{Sinput}
-> likelihood <- function(par, X, y, prec=0) {
+<<poisson_ass_funcs>>=
+likelihood <- function(par, X, y, prec=0) {
   Xbeta <- X %*% par
   -(sum(y * Xbeta - exp(Xbeta)) - .5 * sum(par^2*prec))
 }
 
-> gradient <- function(par, X, y, prec=0) {
+gradient <- function(par, X, y, prec=0) {
   Xbeta <- X %*% par
   -(crossprod(X, (y - exp(Xbeta))) - par * prec)
 }
-\end{Sinput}
-\end{Schunk}
+@
 
 Hence we make a call to \pkg{lbfgs}:
-\begin{Schunk}
-\begin{Sinput}
+
+<<poisson_fit>>=
 out <- lbfgs(likelihood, gradient, init, X=X1, y=y, prec=0, 
                 invisible=1, orthantwise_c=C, 
                 linesearch_algorithm="LBFGS_LINESEARCH_BACKTRACKING",
                 orthantwise_start = 1,
                 orthantwise_end = ncol(X1))
-\end{Sinput}
-\end{Schunk}
+
+all.equal(out$par, as.vector(coef(fit, s = lambda_use)))
+@
 
 The microbenchmark test yields:
-\begin{Schunk}
-\begin{Sinput}
-Unit: milliseconds
-              expr       min        lq    median        uq      max neval
- out <- lbfgs(...)  2.340520  2.441575  2.544409  2.952162 10.47467   100
-fit <- glmnet(...)  9.959642 10.343768 10.694795 12.425912 18.21408   100
 
-\end{Sinput}
-\end{Schunk}
+<<poisson_bench>>=
+microbenchmark(
+  lbfgs = lbfgs(likelihood, gradient, init, X=X1, y=y, prec=0, 
+                invisible=1, orthantwise_c=C, 
+                linesearch_algorithm="LBFGS_LINESEARCH_BACKTRACKING",
+                orthantwise_start = 1,
+                orthantwise_end = ncol(X1)),
+  glmnet = glmnet(x, y, family="poisson", standardize=FALSE))
+@
 
 The \pkg{lbfgs} solution is a little over 4 times as fast. We emphasize that this is not strictly a fair comparison.  \pkg{glmnet} is calculating the entire regularization path and thus is solving 100 problems of the type.  Indeed using OWL-QN to calculate all 100 problems might take hundreds of times longer than \pkg{glmnet}.  However, as noted in \cite{glmnet}, \pkg{glmnet}'s reliance on warm starts means that there is no straightforward method for optimizing with a single value of the regularization parameter. In GLMs it is often desirable to have the regularization path but in iterative algorithms the additional computation may be unnecessary.
 
@@ -352,11 +346,10 @@ For straightforward GLMs it would be difficult to find a solution faster than \p
 
 \subsection{The Basics}
 
-The package supports the implementation of the objective and gradient functions in \proglang{C++}, which may yield significant speed improvements over the respective \proglang{R} implementations. The optimization routine's API accepts both \proglang{R} function objects and external pointers to compiled \proglang{C++} functions. In order to be compatible with the \pkg{lbfgs} API, the \proglang{C++} functions \underline{must} return an object of type \code{Rcpp::NumericVector}, and take in either one or two objects of type \code{SEXP}. The first argument of type \code{SEXP} must be the pointer to an \proglang{R} numerical vector containing the values of the function's parameters. The second (optional) argument must be the pointer to an \proglang{R} environment holding all extra parameters to be fed into the objective and gradient functions. To perform optimization on the Rosenbrock function, we begin by defining the \proglang{C++} implementations of the objective and of the gradient as character strings, using the \pkg{Rcpp} library:
+The package supports the implementation of the objective and gradient functions in \proglang{C++}, which may yield significant speed improvements over the respective \proglang{R} implementations. The optimization routine's API accepts both \proglang{R} function objects and external pointers to compiled \proglang{C++} functions. The C++ evaluation routines use code from \cite{devol} and \cite{rcppde}. \footnote{The idea of supplying external pointers to the underlying \proglang{C++} library was introduced by Dirk Eddelbuettel. See for instance the \href{http://dirk.eddelbuettel.com/papers/rcpp_ku_nov2013-part2.pdf}{slides} from his presentation at the University of Kansas in November 2013.} In order to be compatible with the \pkg{lbfgs} API, the \proglang{C++} functions \underline{must} return an object of type \code{Rcpp::NumericVector}, and take in either one or two objects of type \code{SEXP}. The first argument of type \code{SEXP} must be the pointer to an \proglang{R} numerical vector containing the values of the function's parameters. The second (optional) argument must be the pointer to an \proglang{R} environment holding all extra parameters to be fed into the objective and gradient functions. To perform optimization on the Rosenbrock function, we begin by defining the \proglang{C++} implementations of the objective and of the gradient as character strings, using the \pkg{Rcpp} library:
 
-\begin{Schunk}
-\begin{Sinput}
-> objective.include <- 'Rcpp::NumericVector rosenbrock(SEXP xs) { 
+<<text_ass_cpp_funcs>>= 
+objective.include <- 'Rcpp::NumericVector rosenbrock(SEXP xs) { 
   Rcpp::NumericVector x(xs);
   double x1 = x[0];
   double x2 = x[1];
@@ -367,7 +360,7 @@ The package supports the implementation of the objective and gradient functions 
 }
 '
 
-> gradient.include <- 'Rcpp::NumericVector rosengrad(SEXP xs) {
+gradient.include <- 'Rcpp::NumericVector rosengrad(SEXP xs) {
   Rcpp::NumericVector x(xs);
   double x1 = x[0];
   double x2 = x[1];
@@ -379,97 +372,74 @@ The package supports the implementation of the objective and gradient functions 
   return(out);
 }
 '
-\end{Sinput}
-\end{Schunk}
+@
 
 Then we assign two character strings with the bodies of two functions to generate external pointers to the objective and the gradient:
 
-\begin{Schunk}
-\begin{Sinput}
-> objective.body <- '
+<<ass_cpp_bodies>>=
+objective.body <- '
      typedef Rcpp::NumericVector (*funcPtr)(SEXP);
      return(XPtr<funcPtr>(new funcPtr(&rosenbrock)));
 '
 
-> gradient.body <- '
+gradient.body <- '
      typedef Rcpp::NumericVector (*funcPtr)(SEXP);
      return(XPtr<funcPtr>(new funcPtr(&rosengrad)));
 '
-\end{Sinput}
-\end{Schunk}
+@
 
 Finally, we compile this ensemble using the \pkg{inline} package by \cite{inline}:
 
-\begin{Schunk}
-\begin{Sinput}
-> objective <- cxxfunction(signature(), body=objective.body, 
+<<use_inline>>=
+library(inline)
+objective <- cxxfunction(signature(), body=objective.body, 
                          inc=objective.include, plugin="Rcpp")
 
-> gradient <- cxxfunction(signature(), body=gradient.body, 
-                         inc=gradient.include, plugin="Rcpp")
-\end{Sinput}
-\end{Schunk}
+gradient <- cxxfunction(signature(), body=gradient.body, 
+                        inc=gradient.include, plugin="Rcpp")
+@
 
 The external pointers to the objective and the gradient generated by the two pointer-assigners can then be supplied to the lbfgs routine:
 
-\begin{Schunk}
-\begin{Sinput}
-> out.CPP <- lbfgs(objective(), gradient(), c(-1.2,1), invisible=1)
-\end{Sinput}
-\end{Schunk}
+<<fit_w_cpp>>=
+out.CPP <- lbfgs(objective(), gradient(), c(-1.2,1), invisible=1)
+@
 
 We define the same functions in R for comparison purposes:
 
-\begin{Schunk}
-\begin{Sinput}
-> objective.R <- function(x) {   
-  100 * (x[2] - x[1]^2)^2 + (1 - x[1])^2
+<<ass_R_again>>=
+objective.R <- function(par, ...) {   
+  100 * (par[2] - par[1]^2)^2 + (1 - par[1])^2
 }
 
-> gradient.R <- function(x) {
-  c(-400 * x[1] * (x[2] - x[1]^2) - 2 * (1 - x[1]),
-    200 * (x[2] - x[1]^2))
+gradient.R <- function(par, ...) {
+  c(-400 * par[1] * (par[2] - par[1]^2) - 2 * (1 - par[1]),
+    200 * (par[2] - par[1]^2))
 }
-\end{Sinput}
-\end{Schunk}
+@
 
 A microbenchmark comparison reveals significant speed improvements:
 
-\begin{Schunk}
-\begin{Sinput}
-> microbenchmark(out.CPP <- lbfgs(objective(), gradient(), c(-1.2,1), 
-	invisible=1), out.R <- lbfgs(objective.R, gradient.R, c(-1.2,1), 
-	invisible=1))
-\end{Sinput}
-\end{Schunk}
+<<benc_w_cpp>>=
+microbenchmark(
+  `lbfgs (C++)` = 
+    out.CPP <- lbfgs(objective(), gradient(), c(-1.2,1), invisible=1), 
+  `lbfgs (R)` = 
+    out.R <- lbfgs(objective.R, gradient.R, c(-1.2,1), invisible=1), 
+  optim =  
+    out.optim <- optim(c(-1.2, 1), objective.R, gradient.R, 
+                       method="L-BFGS-B"))
 
-The results are the following, including also the optim routine as a benchmark (\code{neval=100} for all runs):
-
-\begin{Schunk}
-\begin{Sinput}
-Unit: microseconds
-                   expr     min       lq   median         uq        max 
-lbfgs(objective(), ...)  79.430  85.1265  90.6680    97.7615    269.533
-lbfgs(objective.R, ...) 260.552 272.8125 292.2045   312.5050    561.668
-optim(...)              368.788 384.6445 412.3530   448.1345   1719.914
-\end{Sinput}
-\end{Schunk}
-
-\begin{figure}[p]
-    \centering
-    \includegraphics[width=0.8\textwidth]{CppMB}
-    \caption{The violin plots depict the distribution of running times obtained from optimizing the Rosenbrock function in the course a microbenchmark test. From top to bottom, the three experimental conditions were the following: \code{optim()} (L-BFGS-B method) with \proglang{R}-coded inputs; \code{lbfgs()} with \proglang{R}-coded inputs; and \code{lbfgs()} with inputs in \proglang{C++}.}
-    \label{fig:awesome_image}
-\end{figure}
-
+all.equal(out.CPP$par, out.R$par)
+all.equal(out.CPP$par, out.optim$par, tolerance = 1e-5)
+@
 
 \subsection{Extra Parameters in C++ Implementations}
 
 Much like in the \proglang{R} case, the passing of extra parameters with \proglang{C++} implementations of the objective and gradient is achieved through the use of \proglang{R} environments. The following is an example replicating the logistic regression example with \proglang{C++} function implementations. As before, we set up the objective and gradient as character strings. We include the extra environment argument and obtain data by evaluating it using the \code{Rcpp::Environment} class. In order to perform matrix operations, we use the \pkg{RcppArmadillo} library \citeshort{Eddelbuettel_2014}:
 
-\begin{Schunk}
-\begin{Sinput}
-> likelihood.include <- 'Rcpp::NumericVector lhood(SEXP xs, SEXP env){
+<<cpp_w_args>>=
+likelihood.include <- 'Rcpp::NumericVector lhood(SEXP xs, SEXP env){
   arma::vec par = Rcpp::as<arma::vec>(xs);
   Rcpp::Environment e = Rcpp::as<Rcpp::Environment>(env);
   arma::mat X = Rcpp::as<arma::mat>(e["X"]);
@@ -484,7 +454,7 @@ Much like in the \proglang{R} case, the passing of extra parameters with \progla
 }
 '
 
-> gradient.include <- 'Rcpp::NumericVector grad(SEXP xs, SEXP env){
+gradient.include <- 'Rcpp::NumericVector grad(SEXP xs, SEXP env){
   arma::vec par = Rcpp::as<arma::vec>(xs);
   Rcpp::Environment e = Rcpp::as<Rcpp::Environment>(env);
   arma::mat X = Rcpp::as<arma::mat>(e["X"]);
@@ -496,72 +466,70 @@ Much like in the \proglang{R} case, the passing of extra parameters with \progla
   return ret;
 }
 '
-\end{Sinput}
-\end{Schunk}
+@
 
 Then we compile the functions and their pointer-assigners, taking care to map the functions' signatures correctly:
 
-\begin{Schunk}
-\begin{Sinput}
-> likelihood.body <- '
+<<body_cpp_w_args>>=
+likelihood.body <- '
      typedef Rcpp::NumericVector (*funcPtr)(SEXP, SEXP);
      return(XPtr<funcPtr>(new funcPtr(&lhood)));
 '
 
-> gradient.body <- '
+gradient.body <- '
      typedef Rcpp::NumericVector (*funcPtr)(SEXP, SEXP);
      return(XPtr<funcPtr>(new funcPtr(&grad)));
 '
 
-> likelihood.CPP <- cxxfunction(signature(), body=likelihood.body, 
-                          inc=likelihood.include, plugin="RcppArmadillo")
+likelihood.CPP <- cxxfunction(
+  signature(), body=likelihood.body, inc=likelihood.include, 
+  plugin="RcppArmadillo")
 
-> gradient.CPP <- cxxfunction(signature(), body=gradient.body, 
-                         inc=gradient.include, plugin="RcppArmadillo")
-\end{Sinput}
-\end{Schunk}
+gradient.CPP <- cxxfunction(
+  signature(), body=gradient.body, inc=gradient.include, 
+  plugin="RcppArmadillo")
+@
 
 We then instantiate a new R environment with the required objects, and run the optimization routine:
 
-\begin{Schunk}
-\begin{Sinput}
-> data(Leukemia)
+<<ass_data_cpp_w_args>>=
+data(Leukemia)
 
-> X <- Leukemia$x
-> y <- Leukemia$y
-> X1 <- cbind(1, X)
-> init <- rep(0, ncol(X1))
+X <- Leukemia$x
+y <- Leukemia$y
+X1 <- cbind(1, X)
+init <- rep(0, ncol(X1))
 
-> env <- new.env()
-> env[["X"]] <- X1
-> env[["y"]] <- y
-> env[["prec"]] <- 1
+env <- new.env()
+env[["X"]] <- X1
+env[["y"]] <- y
+env[["prec"]] <- 1
 
-> output <- lbfgs(likelihood.CPP(), gradient.CPP(), init, environment=env)
-\end{Sinput}
-\end{Schunk}
+output <- lbfgs(likelihood.CPP(), gradient.CPP(), init, environment=env, 
+                invisible = 1)
+@
 
 A final microbenchmark test reveals performance improvements over the corresponding R implementation (\code{neval = 100} for all runs):
-\begin{Schunk}
-\begin{Sinput}
-> microbenchmark(out.CPP <- lbfgs(likelihood.CPP(), gradient.CPP(), 
-  invisible=1, init, environment=env), out.R <- lbfgs(likelihood, 
-  gradient, init, invisible=1, X=X1, y=y, prec=1))
 
-Unit: milliseconds
- 
-                        expr       min       lq   median       uq      max
-lbfgs(likelihood.CPP(), ...)  121.2342 130.6826 135.0989 140.2065 322.2660
-      lbfgs(likelihood, ...)  126.5353 142.9137 150.2248 156.0659 397.5917
-\end{Sinput}
-\end{Schunk}
+<<bench_cpp_w_args>>=
+microbenchmark(
+  `lbfgs (C++)` = 
+    out.CPP <- lbfgs(likelihood.CPP(), gradient.CPP(), invisible=1, init, 
+                     environment=env), 
+  `lbfgs (R)` = 
+    out.R <- lbfgs(l_logistic, g_logistic, init, invisible=1, X=X1, y=y, 
+                   prec=1), times = 10)
+
+all.equal(out.CPP, out.R)
+@
+
+While the speed of the optimization routines is satisfying with \proglang{R} implementations of the objective and gradient functions, the same interface can be used in tandem with \proglang{C++} when high performance is important.
 
 \section{Conclusion} \label{sec:conclusion}
 
-The \pkg{lbfgs} package provides a generic \proglang{R} interface for performing numerical optimization using the L-BFGS and OWL-QN algorithms. This vignette provides an overview of the package's features and usage. More detailed documentation regarding the package's functionality and API are available in the accompanying manual. We also encourage the interested reader to consult the relevant literature for greater detail regarding the L-BFGS and OWL-QN routines.
+The \pkg{lbfgs} package provides a generic \proglang{R} interface for performing numerical optimization using the L-BFGS and OWL-QN algorithms. This vignette provides an overview of the package's features and usage. More detailed documentation regarding the package's functionality and API are available in the accompanying manual.
 
 \clearpage
 \bibliography{biblio}
 
 \end{document}
-

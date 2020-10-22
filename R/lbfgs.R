@@ -54,8 +54,7 @@ lbfgs <- function(call_eval, call_grad,  vars, environment = NULL, ...,
   }
   
   # Call main C++ routine
-  ret <- .Call('RlibLBFGS_lbfgs', 
-               PACKAGE = 'lbfgs', 
+  ret <- lbfgsOptim(
                call_eval, call_grad, vars, 
                environment, N, 
                invisible, m, epsilon,
@@ -68,14 +67,10 @@ lbfgs <- function(call_eval, call_grad,  vars, environment = NULL, ...,
                orthantwise_end)
   
   # Construct output
-  parameters <- c()
-  for(i in seq(2, N + 1)){
-    parameters <- c(parameters, ret[i])
-  }
   out <- list()
-  out$value <- ret[1]
-  out$par <- parameters
-  convergence <- ret[N + 2]
+  out$value <- ret$value
+  out$par <- ret$par
+  convergence <- ret$convergence
   out$convergence <- convergence
   
   # Catch errors

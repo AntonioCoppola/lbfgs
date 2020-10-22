@@ -1,0 +1,7 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^lbfgs-manual\.pdf
+^\.git$
+^\.gitignore$
+^vignettes/\.gitignore$
+^testscripts
